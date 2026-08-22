@@ -30,15 +30,15 @@ def translate_from_english(text: str, target_lang: str = "en") -> str:
     if not text or not text.strip() or target_lang == "en":
         return text
 
-    # Mask critical legal terms
+    # Mask terms with non-translatable alphanumeric tokens
     placeholders = {}
     modified_text = text
     for i, pattern in enumerate(LEGAL_TERMS):
         matches = re.findall(pattern, modified_text, re.IGNORECASE)
         for m in matches:
-            key = f"__LEGAL_{i}__"
+            key = f"XYZLEGAL{i}XYZ"
             placeholders[key] = m
-            modified_text = modified_text.replace(m, key)
+            modified_text = re.sub(re.escape(m), key, modified_text, flags=re.IGNORECASE)
 
     try:
         translated = GoogleTranslator(source='en', target=target_lang).translate(modified_text)

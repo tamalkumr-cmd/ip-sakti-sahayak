@@ -1,9 +1,9 @@
 import sys
 import os
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-# Ensure backend directory is in sys.path for clean imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from routers import query_router, docs_router, voice_router, export_router, chat_router, risk_router
@@ -11,10 +11,10 @@ from routers import query_router, docs_router, voice_router, export_router, chat
 app = FastAPI(
     title="IP-SAKTI Sahayak API",
     description="Regulatory & IP RAG assistant API for Ministry of Ayush",
-    version="1.0.0"
+    version="1.0.0",
+    default_response_class=JSONResponse
 )
 
-# Enable CORS for frontend clients
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -27,7 +27,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register all API routers
 app.include_router(query_router.router)
 app.include_router(docs_router.router)
 app.include_router(voice_router.router)
