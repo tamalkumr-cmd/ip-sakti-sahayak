@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Ensure backend directory is in sys.path for clean imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from routers import query_router, docs_router, voice_router, export_router, chat_router, risk_router
@@ -13,6 +14,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Enable CORS for frontend clients
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -32,6 +34,13 @@ app.include_router(voice_router.router)
 app.include_router(export_router.router)
 app.include_router(chat_router.router)
 app.include_router(risk_router.router)
+
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "message": "IP-SAKTI Sahayak API is running. Visit /docs for API documentation."
+    }
 
 @app.get("/health")
 def health():
