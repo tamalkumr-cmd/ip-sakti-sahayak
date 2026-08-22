@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 class QueryRequest(BaseModel):
@@ -19,6 +19,7 @@ class QueryResponse(BaseModel):
     status: str = "success"
     query_in_english: str
     verdict: str
+    confidence: float = Field(..., ge=0.0, le=1.0)
     detailed_analysis: str
     national_compliance: str
     international_compliance: str

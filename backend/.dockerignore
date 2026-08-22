@@ -1,0 +1,19 @@
+# Place this file at the REPO ROOT, next to the Dockerfile.
+
+# Frontend -- backend Docker image doesn't need it
+frontend/
+node_modules/
+
+# Python
+backend/venv/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+
+# Git
+.git/
+.gitignore
+
+# Local editor/OS junk
+.vscode/
+.DS_Store

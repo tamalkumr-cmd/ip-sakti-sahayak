@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from routers import query_router, docs_router, voice_router, export_router, chat_router
+from routers import query_router, docs_router, voice_router, export_router, chat_router, risk_router
 
 app = FastAPI(
     title="IP-SAKTI Sahayak API",
@@ -31,6 +31,7 @@ app.include_router(docs_router.router)
 app.include_router(voice_router.router)
 app.include_router(export_router.router)
 app.include_router(chat_router.router)
+app.include_router(risk_router.router)
 
 @app.get("/health")
 def health():

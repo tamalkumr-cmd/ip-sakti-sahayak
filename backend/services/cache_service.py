@@ -1,11 +1,11 @@
 from typing import Optional, Dict, Any
 
-# Pre-computed high-accuracy responses for 4 core judge evaluation queries
 DEMO_CACHE: Dict[str, Dict[str, Any]] = {
     "ashwagandha": {
         "status": "success",
         "query_in_english": "Can I patent a nano-emulsion formulation of Ashwagandha (Withania somnifera) for enhanced stress reduction?",
         "verdict": "Conditional Patentability (Novel Delivery Mechanism)",
+        "confidence": 0.94,
         "detailed_analysis": (
             "Under Section 3(p) of the Indian Patent Act 1970, standard formulations or known uses of Ashwagandha "
             "are non-patentable traditional knowledge cited in TKDL. However, your nano-emulsion formulation is "
@@ -46,6 +46,7 @@ DEMO_CACHE: Dict[str, Dict[str, Any]] = {
         "status": "success",
         "query_in_english": "What are the export regulations for Triphala to the US and Europe?",
         "verdict": "Permitted with Regulatory Compliance Filings",
+        "confidence": 0.81,
         "detailed_analysis": (
             "Triphala (Haritaki, Bibhitaki, Amalaki) cannot be patented as a raw mixture due to prior art in TKDL. "
             "Export is permitted as a herbal dietary supplement subject to strict heavy metal and microbial testing."

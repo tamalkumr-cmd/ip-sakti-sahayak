@@ -9,21 +9,24 @@ router = APIRouter(prefix="/api/v1/chat", tags=["Multi-Turn Consultation"])
 async def handle_chat_message(payload: ChatSessionRequest):
     # Translate inbound message to English
     eng_message = translate_to_english(payload.message, source_lang=payload.language)
-    
+
     # Process turn with conversation history context
     result = process_chat_turn(
         session_id=payload.session_id,
         message=eng_message,
         history=payload.history or []
     )
-    
+
     # Translate outbound reply back if necessary
     if payload.language != "en":
         result["reply"] = translate_from_english(result["reply"], target_lang=payload.language)
-        if result.get("verdict"):
-            result["verdict"] = translate_from_english(result["verdict"], target_lang=payload.language)
+        # NOTE: verdict is intentionally NOT translated. It's a status string
+        # the frontend may match against exact English values (e.g. for badge
+        # rendering — "Patentable", "Barred under 3(p)", etc). Translating it
+        # wouldn't crash anything here since it's a plain str, but it WOULD
+        # silently break any frontend logic that switches on the exact text.
         result["suggested_followups"] = [
             translate_from_english(f, target_lang=payload.language) for f in result.get("suggested_followups", [])
         ]
-        
+
     return result
