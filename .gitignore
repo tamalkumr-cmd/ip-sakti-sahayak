@@ -1,0 +1,10 @@
+﻿backend/venv/
+backend/__pycache__/
+backend/*/__pycache__/
+backend/*/*/__pycache__/
+ai_engine/venv/
+ai_engine/__pycache__/
+frontend/node_modules/
+frontend/.next/
+*.pyc
+.env
