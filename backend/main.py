@@ -35,14 +35,14 @@ app.include_router(export_router.router)
 app.include_router(chat_router.router)
 app.include_router(risk_router.router)
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {
         "status": "ok",
         "message": "IP-SAKTI Sahayak API is running. Visit /docs for API documentation."
     }
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health():
     return {
         "status": "ok",
