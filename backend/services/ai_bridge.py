@@ -1,33 +1,65 @@
+"""
+backend/services/ai_bridge.py
+
+Calls Track 1's RAG engine over HTTP instead of importing it directly.
+This is necessary because the RAG engine (Ollama + ChromaDB) runs on
+Track 1's own machine, while this backend runs on Render -- two separate
+machines that can't share Python imports, only network requests.
+
+REQUIRED ENV VAR (set in Render dashboard -> Environment):
+    RAG_SERVICE_URL=https://your-ngrok-url.ngrok-free.app/run-rag-query
+
+If this env var isn't set, or the local machine/tunnel is unreachable
+(laptop asleep, ngrok not running, network hiccup), this falls back to
+the same safe stub response as before -- the live Render demo never
+crashes just because the local RAG server happens to be offline.
+"""
+
 import logging
-import sys
 import os
+
+import requests
 
 logger = logging.getLogger("ip_sakti_backend.ai_bridge")
 
-# Adds repository root to sys.path so it can access ai_engine
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+RAG_SERVICE_URL = os.getenv("RAG_SERVICE_URL")
+# CPU-mode local LLM inference is slow -- confirmed ~26s for a single real
+# answer (embedding + llama3 generation) during integration testing. The
+# previous 15s timeout was firing before real answers ever came back,
+# silently falling back to the stub every time even though the RAG server
+# and tunnel were both working correctly. 90s gives real headroom.
+RAG_REQUEST_TIMEOUT_SECONDS = 90
+
 
 def execute_rag(query: str, regime_filter: str = "all") -> dict:
-    try:
-        from ai_engine.rag_pipeline import run_rag_query
-        return run_rag_query(query, regime_filter)
-    except ModuleNotFoundError:
-        # Expected until Track 1 lands ai_engine/rag_pipeline.py — no need to
-        # log this as an error, it's the normal state during parallel dev.
-        logger.info("ai_engine.rag_pipeline not available yet; using fallback response.")
-    except Exception:
-        # NOT expected: the real pipeline exists but threw. Previously this
-        # was silently swallowed by a bare `except Exception`, so a genuine
-        # bug in Track 1's code would be invisible — every query would just
-        # look like it's still using the fallback, with no clue why.
-        logger.exception("ai_engine.rag_pipeline raised an unexpected error for query=%r", query)
+    if not RAG_SERVICE_URL:
+        logger.info("RAG_SERVICE_URL not set; using fallback response.")
+        return _fallback_response(query)
 
+    try:
+        response = requests.post(
+            RAG_SERVICE_URL,
+            json={"query": query, "regime_filter": regime_filter},
+            timeout=RAG_REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.ConnectionError:
+        logger.warning("Could not reach local RAG server at %s -- is it running and tunneled?", RAG_SERVICE_URL)
+    except requests.exceptions.Timeout:
+        logger.warning("Local RAG server timed out after %ss.", RAG_REQUEST_TIMEOUT_SECONDS)
+    except Exception:
+        logger.exception("Unexpected error calling local RAG server for query=%r", query)
+
+    return _fallback_response(query)
+
+
+def _fallback_response(query: str) -> dict:
     return {
         "status": "success",
         "query_in_english": query,
         "verdict": "Conditional Patentability (Novel Delivery Mechanism)",
-        "confidence": 0.5,  # Neutral/low-certainty value: this is the unverified fallback stub,
-                            # not a real RAG-grounded answer, so it should never claim high confidence.
+        "confidence": 0.5,
         "detailed_analysis": (
             "Section 3(p) of the Indian Patent Act prohibits patenting traditional knowledge "
             "or aggregations of known herbal properties. However, a novel drug delivery system "
@@ -44,7 +76,7 @@ def execute_rag(query: str, regime_filter: str = "all") -> dict:
                 "clause_or_section": "Section 3(p)",
                 "page_number": 14,
                 "matched_snippet": "An invention which in effect is traditional knowledge or which is an aggregation or duplication of known properties of traditionally known components is not patentable.",
-                "pdf_url": "http://localhost:8000/api/v1/docs/patent_act_1970_sec3.pdf#page=14"
+                "pdf_url": "http://localhost:8000/api/v1/docs/patent_act_1970_sec3.pdf#page=14",
             }
-        ]
+        ],
     }
